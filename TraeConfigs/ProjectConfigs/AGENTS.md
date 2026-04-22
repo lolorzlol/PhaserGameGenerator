@@ -1,167 +1,67 @@
-# AGENTS.md
-
-Project-specific agent instructions for Unity game development with unityMCP.
-
----
-
-## Table of Contents
-
-- [Skills Reference](#skills-reference)
-- [Development Workflow](#development-workflow)
-- [Testing](#testing)
-- [Editor Scripts](#editor-scripts)
-- [Preferences](#preferences)
-- [Troubleshooting](#troubleshooting)
-
----
-
-## Skills Reference
-
-Invoke the appropriate skill before starting each workflow:
-
-| Workflow | Skill |
-|----------|-------|
-| unityMCP operations | `unity-mcp-orchestrator` |
-| Unity Test Framework | `unity-test-framework` |
-
----
-
 ## Development Workflow
 
-### Unity Operations
+### 1. Think Before Coding
 
-- **Check MCP results**: Verify both `message` and `success` fields from MCP calls
-- **Retry on failure**: Adjust parameters based on returned `message` and retry
-- **Batch operations**: Use `batch_execute` to reduce MCP call times
-- **Editor scripts**: Place under `Assets/Editor/`, delete after one-time use
-- **Tooltips**: Add `[Tooltip]` attributes to editor-configurable variables
-- **Console monitoring**: Check Unity Console regularly for logs and compile errors
-- **Play mode**: Ensure editor is not in Play mode before executing editor scripts
-- **Save scenes**: Save scenes promptly after modifications finished.
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
-### Version Control
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
 
-- Use git for version control
-- Add proper `.gitignore` before `git init`
+### 2. Simplicity First
 
-### Plan Mode Orchestration
+**Minimum code that solves the problem. Nothing speculative.**
 
-- Non-trivial tasks (3+ steps or architecture decisions) must enter plan mode
-- If things go off track, stop and replan—don't push through
-- If bugs or frustration accumulate, stop and replan
-- Write detailed specs as input to reduce ambiguity
-- Use numbered steps
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
 
-### Task Management
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
-1. Plan first: write plan to `tasks/todo.md` with checkboxes
-2. Validate plan before starting implementation
-3. Implement incrementally: check off each step as completed
-4. Explain changes: provide high-level summary for each step
-5. Document results: add review section in `tasks/todo.md`
-6. Record lessons: update `tasks/lessons.md` after corrections
+### 3. Surgical Changes
 
-### Subagent Strategy
+**Touch only what you must. Clean up only your own mess.**
 
-- Use subagents heavily to keep the main context window clean
-- Outsource research, exploration, and parallel analysis to subagents
-- Reduce cognitive load and separate concerns via subagents
-- One task per subagent, focused execution
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
 
-### Code Quality Principles
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
 
-**Self-Improvement Loop:**
+The test: Every changed line should trace directly to the user's request.
 
-- After user correction: update `tasks/lessons.md` to record patterns
-- Write rules for yourself to prevent the same mistakes
-- Iterate improvements until error rate drops
-- Verify improvements each session, apply to relevant projects
+### 4. Goal-Driven Execution
 
-**Verification Defaults:**
+**Define success criteria. Loop until verified.**
 
-- Never mark a task complete until you've proven it works
-- Compare main branch to your changes when relevant
-- Always be ready to push to production, verify
-- Ask yourself "Would a senior engineer approve this?"
-- Do assertions, logs, test suite corrections
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
 
-**Elegant Code:**
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
 
-- For non-trivial changes: pause and ask "Is there a more elegant way?"
-- If a fix feels like a patch: "Now that I know everything, implement an elegant solution"
-- Skip this step for simple obvious fixes, don't over-engineer
-- Challenge your own work before committing
-
-**Core Principles:**
-
-- Simplicity first: each change should be as simple as possible
-- Don't be lazy: find root causes, no band-aid fixes
-- Minimal impact: changes should only involve what's necessary
-
-**Autonomous Bug Fixing:**
-
-- When you find a bug: fix it directly, don't ask for help
-- Point out logs, errors, failing tests, then resolve
-- User doesn't need to switch context
-- Proactively fix failing CI tests
-
----
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
 ## Testing
 
 ### Test-Driven Development (TDD)
 
 - Follow the **Red-Green-Refactor** cycle
-- Run tests through `run_tests` in `unityMCP`
-- After tests pass, refactor via code-review
+- Run tests and use Playerwright mcp to mock operations
+- After tests pass, refactor code
 
-### Running Tests
-
-**Step 1: Start test run**
-
-```json
-{ "tool": "run_tests", "params": { "mode": "EditMode" } }
-```
-
-**Step 2: Get results** (use `job_id` from step 1)
-
-```json
-{ "tool": "get_test_job", "params": { "job_id": "<job_id>", "wait_timeout": 60, "include_failed_tests": true } }
-```
-
----
-
-## Editor Scripts
-
-### When to Use
-
-Use editor scripts (`Assets/Editor/`) to automate complex setups:
-- Scene object references: `GameObject.Find()`
-- Prefab references: `AssetDatabase.LoadAssetAtPath<T>()`
-
-### Execution Flow
-
-1. Add `[MenuItem("YourMenuPath")]` attribute to a static method
-2. Refresh Unity: `mcp_unityMCP_refresh_unity`
-3. Execute: `mcp_unityMCP_execute_menu_item`
-4. Delete one-time scripts after successful execution
-
----
-
-## Preferences
-
-| Category | Preference |
-|----------|------------|
-| Input System | Use legacy input system |
-| Git | Do not use `git worktree` |
-| GameObjects | Design size and materials carefully |
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-| Issue | Solution |
-|-------|----------|
-| Compilation errors with unity-test-framework | Call the `unity-test-framework` skill first to configure asmdef correctly |
+## 部署本地游戏服务器时，使用8082端口

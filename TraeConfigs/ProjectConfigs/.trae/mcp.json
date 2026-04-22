@@ -1,7 +1,12 @@
 {
   "mcpServers": {
-    "unityMCP": {
-      "url": "http://localhost:8080/mcp"
+    "Playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@latest",
+        "--headless"
+      ]
     }
   }
 }
