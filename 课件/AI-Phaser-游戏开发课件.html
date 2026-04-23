@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI + Phaser 游戏开发实战课件</title>
+
+  <!-- === FONTS: Plus Jakarta Sans + Nunito === -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===========================================
+         CSS CUSTOM PROPERTIES (THEME)
+         Soft Game 风格 - 柔和粉彩 + 游戏元素
+         =========================================== */
+    :root {
+      --bg-soft: #e8f4f8;
+      --bg-card: #ffffff;
+      --bg-dark: #1e293b;
+      --accent-mint: #7fdbca;
+      --accent-coral: #ff6b6b;
+      --accent-purple: #a855f7;
+      --accent-yellow: #fbbf24;
+      --accent-blue: #3b82f6;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --text-light: #f8fafc;
+      --border-color: #e2e8f0;
+
+      --font-display: "Plus Jakarta Sans", sans-serif;
+      --font-friendly: "Nunito", sans-serif;
+
+      --title-size: clamp(1.5rem, 5vw, 3.5rem);
+      --h2-size: clamp(1.25rem, 3.5vw, 2.5rem);
+      --h3-size: clamp(1rem, 2.5vw, 1.5rem);
+      --body-size: clamp(0.75rem, 1.5vw, 1.125rem);
+      --small-size: clamp(0.65rem, 1vw, 0.875rem);
+
+      --slide-padding: clamp(1.5rem, 4vw, 4rem);
+      --content-gap: clamp(1rem, 2vw, 2rem);
+      --element-gap: clamp(0.5rem, 1vw, 1rem);
+
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --duration-normal: 0.6s;
+    }
+
+    /* ===========================================
+         BASE STYLES
+         =========================================== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    html {
+      scroll-snap-type: y mandatory;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-display);
+      background: var(--bg-soft);
+    }
+
+    /* ===========================================
+         VIEWPORT FITTING: MANDATORY BASE STYLES
+         =========================================== */
+    .slide {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      scroll-snap-align: start;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .slide-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: var(--slide-padding);
+      max-height: 100%;
+      overflow: hidden;
+    }
+
+    /* ===========================================
+         ANIMATIONS
+         =========================================== */
+    .reveal {
+      opacity: 0;
+      transform: translateY(25px) scale(0.98);
+      transition: opacity var(--duration-normal) var(--ease-out),
+                  transform var(--duration-normal) var(--ease-out);
+    }
+
+    .slide.visible .reveal {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .reveal:nth-child(1) { transition-delay: 0.05s; }
+    .reveal:nth-child(2) { transition-delay: 0.15s; }
+    .reveal:nth-child(3) { transition-delay: 0.25s; }
+    .reveal:nth-child(4) { transition-delay: 0.35s; }
+    .reveal:nth-child(5) { transition-delay: 0.45s; }
+    .reveal:nth-child(6) { transition-delay: 0.55s; }
+
+    /* ===========================================
+         BACKGROUND EFFECTS
+         柔和几何浮动形状
+         =========================================== */
+    .geo-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .geo-shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.5;
+      animation: floatShape 10s ease-in-out infinite;
+    }
+
+    .geo-shape.circle-1 {
+      width: clamp(120px, 20vw, 250px);
+      height: clamp(120px, 20vw, 250px);
+      background: var(--accent-mint);
+      top: 5%;
+      left: -8%;
+    }
+
+    .geo-shape.circle-2 {
+      width: clamp(80px, 12vw, 180px);
+      height: clamp(80px, 12vw, 180px);
+      background: var(--accent-coral);
+      top: 60%;
+      right: -5%;
+      animation-delay: 3s;
+    }
+
+    .geo-shape.circle-3 {
+      width: clamp(60px, 10vw, 120px);
+      height: clamp(60px, 10vw, 120px);
+      background: var(--accent-purple);
+      bottom: 10%;
+      left: 15%;
+      opacity: 0.3;
+      animation-delay: 5s;
+    }
+
+    @keyframes floatShape {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(15px, -25px) scale(1.05); }
+    }
+
+    /* ===========================================
+         SLIDE COMPONENTS
+         =========================================== */
+
+    /* 主卡片 */
+    .main-card {
+      background: var(--bg-card);
+      padding: clamp(1.5rem, 4vw, 3rem);
+      border-radius: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), 0 12px 24px rgba(0, 0, 0, 0.04);
+      position: relative;
+      z-index: 10;
+      max-width: min(85vw, 900px);
+      max-height: min(80vh, 600px);
+    }
+
+    .main-card.dark {
+      background: var(--bg-dark);
+      color: var(--text-light);
+    }
+
+    .main-card.dark h2,
+    .main-card.dark h3 {
+      color: var(--text-light);
+    }
+
+    .main-card.dark .text-secondary {
+      color: #94a3b8;
+    }
+
+    /* 标题样式 */
+    h1 {
+      font-family: var(--font-display);
+      font-size: var(--title-size);
+      font-weight: 800;
+      color: var(--text-primary);
+      text-align: center;
+      margin-bottom: var(--element-gap);
+    }
+
+    h1 .accent {
+      color: var(--accent-purple);
+    }
+
+    h2 {
+      font-family: var(--font-display);
+      font-size: var(--h2-size);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--content-gap);
+    }
+
+    h3 {
+      font-family: var(--font-display);
+      font-size: var(--h3-size);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--element-gap);
+    }
+
+    .subtitle {
+      font-family: var(--font-friendly);
+      font-size: clamp(0.9rem, 2vw, 1.3rem);
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .text-secondary {
+      color: var(--text-secondary);
+      font-size: var(--body-size);
+    }
+
+    /* 时间标签 */
+    .time-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: rgba(168, 85, 247, 0.1);
+      border-radius: 16px;
+      font-size: var(--small-size);
+      color: var(--accent-purple);
+      font-weight: 600;
+      margin-top: var(--element-gap);
+    }
+
+    /* 游戏图标 */
+    .game-icons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: var(--element-gap);
+    }
+
+    .game-icon {
+      width: clamp(28px, 4vw, 40px);
+      height: clamp(28px, 4vw, 40px);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(0.9rem, 1.5vw, 1.2rem);
+    }
+
+    .game-icon.mint { background: var(--accent-mint); }
+    .game-icon.coral { background: var(--accent-coral); }
+    .game-icon.yellow { background: var(--accent-yellow); }
+    .game-icon.purple { background: var(--accent-purple); }
+    .game-icon.blue { background: var(--accent-blue); }
+
+    /* 列表样式 */
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--element-gap);
+      max-width: 100%;
+    }
+
+    .bullet-list li {
+      font-size: var(--body-size);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      line-height: 1.5;
+    }
+
+    .bullet-list li::before {
+      content: "•";
+      color: var(--accent-mint);
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+
+    .main-card.dark .bullet-list li {
+      color: #cbd5e1;
+    }
+
+    .main-card.dark .bullet-list li::before {
+      color: var(--accent-coral);
+    }
+
+    /* 表格样式 */
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--body-size);
+      margin-top: var(--element-gap);
+    }
+
+    .compare-table th,
+    .compare-table td {
+      padding: clamp(0.5rem, 1vw, 0.75rem);
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .compare-table th {
+      font-weight: 600;
+      color: var(--text-primary);
+      background: rgba(127, 219, 202, 0.1);
+    }
+
+    .compare-table td {
+      color: var(--text-secondary);
+    }
+
+    .compare-table .highlight {
+      color: var(--accent-purple);
+      font-weight: 600;
+    }
+
+    .main-card.dark .compare-table th,
+    .main-card.dark .compare-table td {
+      border-bottom-color: #334155;
+    }
+
+    .main-card.dark .compare-table th {
+      color: var(--text-light);
+      background: rgba(127, 219, 202, 0.2);
+    }
+
+    .main-card.dark .compare-table td {
+      color: #cbd5e1;
+    }
+
+    /* 时间轴样式 */
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: var(--element-gap);
+      width: 100%;
+    }
+
+    .timeline-item {
+      display: flex;
+      align-items: center;
+      gap: clamp(0.5rem, 1.5vw, 1rem);
+    }
+
+    .timeline-time {
+      font-family: var(--font-friendly);
+      font-size: var(--small-size);
+      font-weight: 700;
+      color: var(--accent-coral);
+      min-width: clamp(40px, 6vw, 60px);
+    }
+
+    .timeline-dot {
+      width: clamp(16px, 2vw, 24px);
+      height: clamp(16px, 2vw, 24px);
+      border-radius: 50%;
+      background: var(--accent-mint);
+    }
+
+    .timeline-content {
+      font-size: var(--body-size);
+      color: var(--text-secondary);
+    }
+
+    .main-card.dark .timeline-time {
+      color: var(--accent-yellow);
+    }
+
+    .main-card.dark .timeline-content {
+      color: #cbd5e1;
+    }
+
+    /* 流程图样式 */
+    .flow-chart {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0.25rem, 0.5vw, 0.5rem);
+      flex-wrap: wrap;
+      margin-top: var(--element-gap);
+    }
+
+    .flow-box {
+      padding: clamp(0.5rem, 1vw, 0.75rem) clamp(0.75rem, 1.5vw, 1.25rem);
+      background: var(--accent-mint);
+      color: var(--bg-dark);
+      font-size: var(--small-size);
+      font-weight: 600;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .flow-arrow {
+      color: var(--accent-purple);
+      font-size: clamp(1rem, 1.5vw, 1.5rem);
+    }
+
+    /* 进度指示 */
+    .section-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: var(--content-gap);
+    }
+
+    .section-number {
+      font-family: var(--font-display);
+      font-size: var(--h3-size);
+      font-weight: 800;
+      color: var(--accent-purple);
+    }
+
+    .section-label {
+      font-size: var(--small-size);
+      color: var(--text-secondary);
+      padding: 4px 12px;
+      background: rgba(168, 85, 247, 0.1);
+      border-radius: 12px;
+    }
+
+    /* 代码块样式 */
+    .code-block {
+      background: var(--bg-dark);
+      color: #e2e8f0;
+      padding: clamp(0.75rem, 1.5vw, 1rem);
+      border-radius: 12px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: var(--small-size);
+      overflow-x: auto;
+      max-width: 100%;
+      margin-top: var(--element-gap);
+    }
+
+    .code-block .keyword { color: var(--accent-coral); }
+    .code-block .string { color: var(--accent-mint); }
+    .code-block .comment { color: #64748b; }
+
+    /* ===========================================
+         RESPONSIVE BREAKPOINTS
+         =========================================== */
+    @media (max-height: 700px) {
+      :root {
+        --slide-padding: clamp(1rem, 3vw, 2rem);
+        --content-gap: clamp(0.75rem, 1.5vw, 1.25rem);
+      }
+    }
+
+    @media (max-height: 600px) {
+      .nav-dots, .geo-shape { display: none; }
+      :root {
+        --title-size: clamp(1.25rem, 4vw, 2rem);
+        --h2-size: clamp(1rem, 3vw, 1.5rem);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .flow-chart { flex-direction: column; gap: 0.5rem; }
+      .flow-arrow { transform: rotate(90deg); }
+    }
+
+    /* ===========================================
+         REDUCED MOTION
+         =========================================== */
+    @media (prefers-reduced-motion: reduce) {
+      .geo-shape { animation: none; }
+      .reveal {
+        transition-duration: 0.2s;
+        transform: none;
+      }
+      html { scroll-behavior: auto; }
+    }
+
+    /* ===========================================
+         NAVIGATION
+         =========================================== */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 4px;
+      background: var(--accent-purple);
+      width: 0%;
+      z-index: 100;
+      transition: width 0.3s ease;
+    }
+
+    .nav-dots {
+      position: fixed;
+      right: clamp(16px, 2vw, 24px);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .nav-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border-color);
+      cursor: pointer;
+      transition: background 0.2s, transform 0.2s;
+    }
+
+    .nav-dot.active {
+      background: var(--accent-purple);
+      transform: scale(1.2);
+    }
+
+    /* ===========================================
+         INLINE EDITING
+         =========================================== */
+    .edit-hotzone {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 80px;
+      height: 80px;
+      z-index: 10000;
+      cursor: pointer;
+    }
+
+    .edit-toggle {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      width: 36px;
+      height: 36px;
+      background: var(--bg-card);
+      border: 2px solid var(--accent-purple);
+      border-radius: 8px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      z-index: 10001;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .edit-toggle.show,
+    .edit-toggle.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .edit-toggle.active {
+      background: var(--accent-purple);
+      color: white;
+    }
+
+    .edit-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--accent-purple);
+      color: white;
+      padding: 8px 16px;
+      font-size: var(--small-size);
+      font-weight: 600;
+      text-align: center;
+      z-index: 10002;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .edit-banner.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    body.edit-active [data-editable] {
+      outline: 2px dashed var(--accent-coral);
+      outline-offset: 4px;
+      cursor: text;
+    }
+
+    body.edit-active [data-editable]:focus {
+      outline: 2px solid var(--accent-purple);
+    }
+  </style>
+</head>
+<body>
+  <!-- === PROGRESS BAR === -->
+  <div class="progress-bar"></div>
+
+  <!-- === NAVIGATION DOTS === -->
+  <nav class="nav-dots"></nav>
+
+  <!-- === EDIT MODE UI === -->
+  <div class="edit-hotzone"></div>
+  <button class="edit-toggle" id="editToggle" title="Edit mode (E)">✏️</button>
+  <div class="edit-banner">Edit mode — Click text to edit | Ctrl+S to save | E to exit</div>
+
+  <!-- ===========================================
+       SLIDE 1: TITLE
+       =========================================== -->
+  <section class="slide" data-slide="1">
+    <div class="geo-bg">
+      <div class="geo-shape circle-1"></div>
+      <div class="geo-shape circle-2"></div>
+      <div class="geo-shape circle-3"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card reveal">
+        <div class="game-icons reveal">
+          <div class="game-icon mint">🏰</div>
+          <div class="game-icon coral">👾</div>
+          <div class="game-icon yellow">🪙</div>
+        </div>
+        <h1 class="reveal" data-editable>AI + <span class="accent">Phaser</span> 游戏开发</h1>
+        <p class="subtitle reveal" data-editable>塔防游戏实战课件</p>
+        <div class="time-badge reveal" data-editable>90分钟双节课</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       SLIDE 2: Course Info
+       =========================================== -->
+  <section class="slide" data-slide="2">
+    <div class="geo-bg">
+      <div class="geo-shape circle-1"></div>
+      <div class="geo-shape circle-2"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card reveal">
+        <div class="section-indicator reveal">
+          <span class="section-number">01</span>
+          <span class="section-label">课程信息</span>
+        </div>
+
+        <h2 class="reveal" data-editable>课程概览</h2>
+
+        <div class="bullet-list reveal">
+          <li data-editable><strong>目标受众</strong>：AI 辅助开发课程学员（已掌握 superpowers 理论）</li>
+          <li data-editable><strong>前置知识</strong>：superpowers 工作流、Unity/Unreal 游戏开发经验</li>
+          <li data-editable><strong>课时安排</strong>：双节课 90 分钟，连续进行无休息</li>
+          <li data-editable><strong>输出形式</strong>：HTML 网页课件（可嵌入代码和游戏演示）</li>
+        </div>
+
+        <div class="time-badge reveal" data-editable>核心目标：完成塔防游戏原型</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       SLIDE 3: Superpowers Review
+       =========================================== -->
+  <section class="slide" data-slide="3">
+    <div class="geo-bg">
+      <div class="geo-shape circle-2"></div>
+      <div class="geo-shape circle-3"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card dark reveal">
+        <div class="section-indicator reveal">
+          <span class="section-number">02</span>
+          <span class="section-label">第一节课 5min</span>
+        </div>
+
+        <h2 class="reveal" data-editable>superpowers 快速回顾</h2>
+
+        <div class="flow-chart reveal">
+          <div class="flow-box" data-editable>using-superpowers</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box" data-editable>brainstorming</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box" data-editable>writing-plans</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box" data-editable>executing-plans</div>
+        </div>
+
+        <div class="bullet-list reveal">
+          <li data-editable><strong>brainstorming</strong>：需求分析、方案设计</li>
+          <li data-editable><strong>systematic-debugging</strong>：Bug 修复、问题定位</li>
+          <li data-editable><strong>verification</strong>：功能验证、完成确认</li>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       SLIDE 4: Engine Comparison
+       =========================================== -->
+  <section class="slide" data-slide="4">
+    <div class="geo-bg">
+      <div class="geo-shape circle-1"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card reveal" style="max-height: min(75vh, 550px);">
+        <div class="section-indicator reveal">
+          <span class="section-number">03</span>
+          <span class="section-label">第一节课 15min</span>
+        </div>
+
+        <h2 class="reveal" data-editable>Unity/Unreal vs Phaser 对比</h2>
+
+        <table class="compare-table reveal">
+          <thead>
+            <tr>
+              <th data-editable>维度</th>
+              <th data-editable>Unity/Unreal</th>
+              <th data-editable>Phaser</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-editable>运行平台</td>
+              <td data-editable>桌面/移动/主机</td>
+              <td class="highlight" data-editable>浏览器（无需安装）</td>
+            </tr>
+            <tr>
+              <td data-editable>开发语言</td>
+              <td data-editable>C# / C++</td>
+              <td class="highlight" data-editable>JavaScript</td>
+            </tr>
+            <tr>
+              <td data-editable>学习曲线</td>
+              <td data-editable>较陡</td>
+              <td class="highlight" data-editable>较平（HTML+JS即可）</td>
+            </tr>
+            <tr>
+              <td data-editable>项目规模</td>
+              <td data-editable>大型 3D 游戏</td>
+              <td class="highlight" data-editable>中小型 2D 游戏</td>
+            </tr>
+            <tr>
+              <td data-editable>AI 协作</td>
+              <td data-editable>代码量多，复杂</td>
+              <td class="highlight" data-editable>代码精简，迭代快速</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       SLIDE 5: Phaser Introduction
+       =========================================== -->
+  <section class="slide" data-slide="5">
+    <div class="geo-bg">
+      <div class="geo-shape circle-1"></div>
+      <div class="geo-shape circle-2"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card reveal">
+        <div class="section-indicator reveal">
+          <span class="section-number">04</span>
+          <span class="section-label">Phaser 介绍</span>
+        </div>
+
+        <h2 class="reveal" data-editable>什么是 Phaser？</h2>
+
+        <div class="bullet-list reveal">
+          <li data-editable><strong>轻量级 HTML5 2D 游戏框架</strong>，专为浏览器游戏设计</li>
+          <li data-editable><strong>核心能力</strong>：游戏循环、精灵渲染、物理引擎、动画、音频</li>
+          <li data-editable><strong>技术栈</strong>：HTML + JavaScript + Canvas/WebGL</li>
+          <li data-editable><strong>适合 AI 协作</strong>：代码结构简单、单文件可运行、修改即时可见</li>
+        </div>
+
+        <div class="game-icons reveal" style="margin-top: var(--element-gap);">
+          <div class="game-icon mint">🎮</div>
+          <div class="game-icon coral">📱</div>
+          <div class="game-icon yellow">⚡</div>
+          <div class="game-icon purple">🧠</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       SLIDE 6: Game Engine Skill
+       =========================================== -->
+  <section class="slide" data-slide="6">
+    <div class="geo-bg">
+      <div class="geo-shape circle-2"></div>
+      <div class="geo-shape circle-3"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card dark reveal">
+        <div class="section-indicator reveal">
+          <span class="section-number">05</span>
+          <span class="section-label">第一节课 5min</span>
+        </div>
+
+        <h2 class="reveal" data-editable>game-engine skill 简介</h2>
+
+        <div class="bullet-list reveal">
+          <li data-editable><strong>技能定位</strong>：项目特定技能，提供 Phaser 游戏开发知识库</li>
+          <li data-editable><strong>核心内容</strong>：游戏循环、物理碰撞、精灵动画、音频处理</li>
+          <li data-editable><strong>模板资源</strong>：paddle-game、platform-game 等可直接调用</li>
+          <li data-editable><strong>触发方式</strong>：<code>/game-engine</code> 或描述游戏需求自动触发</li>
+        </div>
+
+        <div class="code-block reveal" data-editable>
+          <span class="keyword">/game-engine</span> <span class="string">create tower-defense game</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       SLIDE 7: AI Collaboration Tips
+       =========================================== -->
+  <section class="slide" data-slide="7">
+    <div class="geo-bg">
+      <div class="geo-shape circle-1"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card reveal">
+        <div class="section-indicator reveal">
+          <span class="section-number">06</span>
+          <span class="section-label">第一节课 10min</span>
+        </div>
+
+        <h2 class="reveal" data-editable>游戏开发 AI 协作技巧</h2>
+
+        <div class="bullet-list reveal">
+          <li data-editable><strong>提示词范式</strong>："创建一个塔防游戏，使用 Phaser，包含波次系统"</li>
+          <li data-editable><strong>分阶段策略</strong>：先核心 → 再扩展 → 最后优化</li>
+          <li data-editable><strong>迭代优化</strong>：描述具体问题 → AI 定位 → 修改验证</li>
+        </div>
+
+        <div class="flow-chart reveal">
+          <div class="flow-box" data-editable>brainstorming</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box" data-editable>writing-plans</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box" data-editable>game-engine</div>
+          <span class="flow-arrow">→</span>
+          <div class="flow-box" data-editable>verification</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       SLIDE 8: Brainstorming Demo
+       =========================================== -->
+  <section class="slide" data-slide="8">
+    <div class="geo-bg">
+      <div class="geo-shape circle-2"></div>
+      <div class="geo-shape circle-3"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card dark reveal">
+        <div class="section-indicator reveal">
+          <span class="section-number">07</span>
+          <span class="section-label">第一节课 10min</span>
+        </div>
+
+        <h2 class="reveal" data-editable>塔防游戏设计示范</h2>
+
+        <p class="text-secondary reveal" data-editable style="margin-bottom: var(--content-gap);">
+          使用 brainstorming skill 实际演示
+        </p>
+
+        <div class="timeline reveal">
+          <div class="timeline-item">
+            <span class="timeline-time">Step 1</span>
+            <div class="timeline-dot"></div>
+            <span class="timeline-content" data-editable>描述游戏概念 → AI 提问澄清</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-time">Step 2</span>
+            <div class="timeline-dot"></div>
+            <span class="timeline-content" data-editable>AI 提出 2-3 种设计方案</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-time">Step 3</span>
+            <div class="timeline-dot"></div>
+            <span class="timeline-content" data-editable>用户选择 → AI 展示设计细节</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-time">Step 4</span>
+            <div class="timeline-dot"></div>
+            <span class="timeline-content" data-editable>输出设计文档到 docs/superpowers/specs/</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       SLIDE 9: Class 2 Overview
+       =========================================== -->
+  <section class="slide" data-slide="9">
+    <div class="geo-bg">
+      <div class="geo-shape circle-1"></div>
+      <div class="geo-shape circle-2"></div>
+      <div class="geo-shape circle-3"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card reveal" style="max-width: min(90vw, 800px);">
+        <div class="section-indicator reveal">
+          <span class="section-number">08</span>
+          <span class="section-label">第二节课</span>
+        </div>
+
+        <h2 class="reveal" data-editable>塔防游戏完整开发实操</h2>
+
+        <div class="timeline reveal">
+          <div class="timeline-item">
+            <span class="timeline-time">3min</span>
+            <div class="timeline-dot"></div>
+            <span class="timeline-content" data-editable>设置开发环境（8082端口、Trae 工作区）</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-time">22min</span>
+            <div class="timeline-dot"></div>
+            <span class="timeline-content" data-editable>核心功能实现（4阶段开发流程）</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-time">10min</span>
+            <div class="timeline-dot"></div>
+            <span class="timeline-content" data-editable>调试与验证技巧（Playwright MCP）</span>
+          </div>
+          <div class="timeline-item">
+            <span class="timeline-time">10min</span>
+            <div class="timeline-dot"></div>
+            <span class="timeline-content" data-editable>扩展功能演示（得分、塔升级、音效）</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       SLIDE 10: Core Implementation Phases
+       =========================================== -->
+  <section class="slide" data-slide="10">
+    <div class="geo-bg">
+      <div class="geo-shape circle-1"></div>
+      <div class="geo-shape circle-3"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card dark reveal" style="max-height: min(75vh, 550px);">
+        <div class="section-indicator reveal">
+          <span class="section-number">09</span>
+          <span class="section-label">第二节课 22min</span>
+        </div>
+
+        <h2 class="reveal" data-editable>核心功能实现 4 阶段</h2>
+
+        <table class="compare-table reveal">
+          <thead>
+            <tr>
+              <th data-editable>阶段</th>
+              <th data-editable>功能</th>
+              <th data-editable>AI 协作方式</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td data-editable>1</td>
+              <td data-editable>游戏场景与地图</td>
+              <td data-editable>单次提示词创建基础场景</td>
+            </tr>
+            <tr>
+              <td data-editable>2</td>
+              <td data-editable>敌人系统</td>
+              <td data-editable>描述行为 → AI 实现 → 迭代调整</td>
+            </tr>
+            <tr>
+              <td data-editable>3</td>
+              <td data-editable>塔放置系统</td>
+              <td data-editable>分步实现 → 验证 → 完善攻击逻辑</td>
+            </tr>
+            <tr>
+              <td data-editable>4</td>
+              <td data-editable>攻击与伤害</td>
+              <td data-editable>描述机制 → AI 实现碰撞检测</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p class="text-secondary reveal" data-editable style="margin-top: var(--element-gap);">
+          每阶段：提示词 → AI 生成 → 运行验证 → 迭代优化
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       SLIDE 11: Debugging
+       =========================================== -->
+  <section class="slide" data-slide="11">
+    <div class="geo-bg">
+      <div class="geo-shape circle-2"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card reveal">
+        <div class="section-indicator reveal">
+          <span class="section-number">10</span>
+          <span class="section-label">第二节课 10min</span>
+        </div>
+
+        <h2 class="reveal" data-editable>调试与验证技巧</h2>
+
+        <div class="bullet-list reveal">
+          <li data-editable><strong>Playwright MCP</strong>：浏览器自动化测试游戏交互</li>
+          <li data-editable><strong>常见问题</strong>：敌人不动？塔不攻击？子弹不碰撞？</li>
+          <li data-editable><strong>systematic-debugging</strong>：AI 辅助系统化排查问题</li>
+          <li data-editable><strong>verification-before-completion</strong>：验证功能完整性再标记完成</li>
+        </div>
+
+        <div class="code-block reveal" data-editable>
+          <span class="comment">// 调试提示词示例</span><br>
+          <span class="keyword">/systematic-debugging</span> <span class="string">敌人不沿路径移动</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       SLIDE 12: Extensions
+       =========================================== -->
+  <section class="slide" data-slide="12">
+    <div class="geo-bg">
+      <div class="geo-shape circle-1"></div>
+      <div class="geo-shape circle-2"></div>
+      <div class="geo-shape circle-3"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card reveal">
+        <div class="section-indicator reveal">
+          <span class="section-number">11</span>
+          <span class="section-label">第二节课 10min</span>
+        </div>
+
+        <h2 class="reveal" data-editable>扩展功能演示</h2>
+
+        <p class="text-secondary reveal" data-editable style="margin-bottom: var(--content-gap);">
+          展示 AI 协作的迭代扩展能力
+        </p>
+
+        <div class="game-icons reveal" style="gap: 16px; margin-bottom: var(--content-gap);">
+          <div class="game-icon yellow">💰</div>
+          <div class="game-icon mint">⬆️</div>
+          <div class="game-icon purple">🎯</div>
+          <div class="game-icon coral">🔊</div>
+        </div>
+
+        <div class="bullet-list reveal">
+          <li data-editable><strong>得分与金币系统</strong>：单次提示词添加游戏 UI</li>
+          <li data-editable><strong>塔升级机制</strong>：描述升级逻辑 → AI 实现</li>
+          <li data-editable><strong>多种塔类型</strong>：扩展不同攻击效果的塔</li>
+          <li data-editable><strong>音效与动画</strong>：添加爆炸效果、攻击音效</li>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       SLIDE 13: Summary
+       =========================================== -->
+  <section class="slide" data-slide="13">
+    <div class="geo-bg">
+      <div class="geo-shape circle-1"></div>
+      <div class="geo-shape circle-2"></div>
+      <div class="geo-shape circle-3"></div>
+    </div>
+
+    <div class="slide-content">
+      <div class="main-card reveal">
+        <div class="game-icons reveal">
+          <div class="game-icon mint">✅</div>
+          <div class="game-icon yellow">🎉</div>
+          <div class="game-icon purple">🎮</div>
+        </div>
+
+        <h2 class="reveal" data-editable>课程总结</h2>
+
+        <div class="bullet-list reveal">
+          <li data-editable><strong>game-engine skill</strong>：Phaser 游戏开发知识库</li>
+          <li data-editable><strong>AI 协作流程</strong>：brainstorming → planning → execution → verification</li>
+          <li data-editable><strong>迭代优化</strong>：分阶段开发，逐步验证完善</li>
+          <li data-editable><strong>产出</strong>：可运行的塔防游戏原型</li>
+        </div>
+
+        <div class="time-badge reveal" data-editable>恭喜完成 AI + Phaser 游戏开发课程！</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================
+       JAVASCRIPT
+       =========================================== -->
+  <script>
+    /* === SLIDE PRESENTATION CONTROLLER === */
+    class SlidePresentation {
+      constructor() {
+        this.slides = document.querySelectorAll('.slide');
+        this.currentSlide = 0;
+        this.progressBar = document.querySelector('.progress-bar');
+        this.navDotsContainer = document.querySelector('.nav-dots');
+
+        this.setupIntersectionObserver();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupNavDots();
+        this.updateProgressBar();
+      }
+
+      setupIntersectionObserver() {
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              this.currentSlide = parseInt(entry.target.dataset.slide) - 1;
+              this.updateProgressBar();
+              this.updateNavDots();
+            }
+          });
+        }, { threshold: 0.5 });
+
+        this.slides.forEach(slide => observer.observe(slide));
+      }
+
+      setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+            e.preventDefault();
+            this.goToNext();
+          } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.goToPrev();
+          }
+        });
+      }
+
+      setupTouchNav() {
+        let touchStartY = 0;
+        document.addEventListener('touchstart', (e) => {
+          touchStartY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', (e) => {
+          const touchEndY = e.changedTouches[0].clientY;
+          const diff = touchStartY - touchEndY;
+          if (Math.abs(diff) > 50) {
+            if (diff > 0) this.goToNext();
+            else this.goToPrev();
+          }
+        });
+      }
+
+      setupNavDots() {
+        this.navDotsContainer.innerHTML = '';
+        this.slides.forEach((slide, index) => {
+          const dot = document.createElement('div');
+          dot.className = 'nav-dot';
+          dot.addEventListener('click', () => this.goToSlide(index));
+          this.navDotsContainer.appendChild(dot);
+        });
+      }
+
+      updateNavDots() {
+        const dots = this.navDotsContainer.querySelectorAll('.nav-dot');
+        dots.forEach((dot, index) => {
+          dot.classList.toggle('active', index === this.currentSlide);
+        });
+      }
+
+      updateProgressBar() {
+        const progress = ((this.currentSlide + 1) / this.slides.length) * 100;
+        this.progressBar.style.width = `${progress}%`;
+      }
+
+      goToNext() {
+        if (this.currentSlide < this.slides.length - 1) {
+          this.slides[this.currentSlide + 1].scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+
+      goToPrev() {
+        if (this.currentSlide > 0) {
+          this.slides[this.currentSlide - 1].scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+
+      goToSlide(index) {
+        this.slides[index].scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    /* === INLINE EDITING CONTROLLER === */
+    class InlineEditor {
+      constructor() {
+        this.isActive = false;
+        this.editToggle = document.getElementById('editToggle');
+        this.editBanner = document.querySelector('.edit-banner');
+        this.hotzone = document.querySelector('.edit-hotzone');
+        this.hideTimeout = null;
+
+        this.setupHotzone();
+        this.setupKeyboard();
+        this.setupToggle();
+      }
+
+      setupHotzone() {
+        this.hotzone.addEventListener('mouseenter', () => {
+          clearTimeout(this.hideTimeout);
+          this.editToggle.classList.add('show');
+        });
+
+        this.hotzone.addEventListener('mouseleave', () => {
+          this.hideTimeout = setTimeout(() => {
+            if (!this.isActive) this.editToggle.classList.remove('show');
+          }, 400);
+        });
+
+        this.editToggle.addEventListener('mouseenter', () => {
+          clearTimeout(this.hideTimeout);
+        });
+
+        this.editToggle.addEventListener('mouseleave', () => {
+          this.hideTimeout = setTimeout(() => {
+            if (!this.isActive) this.editToggle.classList.remove('show');
+          }, 400);
+        });
+
+        this.hotzone.addEventListener('click', () => this.toggleEditMode());
+      }
+
+      setupKeyboard() {
+        document.addEventListener('keydown', (e) => {
+          if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
+            this.toggleEditMode();
+          }
+          if (e.key === 's' && (e.ctrlKey || e.metaKey) && this.isActive) {
+            e.preventDefault();
+            this.exportFile();
+          }
+        });
+      }
+
+      setupToggle() {
+        this.editToggle.addEventListener('click', () => this.toggleEditMode());
+      }
+
+      toggleEditMode() {
+        this.isActive = !this.isActive;
+
+        if (this.isActive) {
+          document.body.classList.add('edit-active');
+          this.editToggle.classList.add('active');
+          this.editBanner.classList.add('active');
+
+          document.querySelectorAll('[data-editable]').forEach(el => {
+            el.setAttribute('contenteditable', 'true');
+          });
+
+          this.saveToLocalStorage();
+        } else {
+          document.body.classList.remove('edit-active');
+          this.editToggle.classList.remove('active');
+          this.editBanner.classList.remove('active');
+
+          document.querySelectorAll('[data-editable]').forEach(el => {
+            el.removeAttribute('contenteditable');
+          });
+        }
+      }
+
+      saveToLocalStorage() {
+        const content = {};
+        document.querySelectorAll('[data-editable]').forEach(el => {
+          const key = el.closest('.slide')?.dataset.slide + '-' + el.textContent.substring(0, 20);
+          content[key] = el.innerHTML;
+        });
+        localStorage.setItem('slides-content', JSON.stringify(content));
+      }
+
+      exportFile() {
+        // Strip edit state before capturing
+        const editableEls = Array.from(document.querySelectorAll('[data-editable]'));
+        editableEls.forEach(el => el.removeAttribute('contenteditable'));
+        document.body.classList.remove('edit-active');
+        this.editToggle.classList.remove('active', 'show');
+        this.editBanner.classList.remove('active', 'show');
+
+        const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+
+        // Restore edit state
+        document.body.classList.add('edit-active');
+        editableEls.forEach(el => el.setAttribute('contenteditable', 'true'));
+        this.editToggle.classList.add('active');
+        this.editBanner.classList.add('active');
+
+        const blob = new Blob([html], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'AI-Phaser-游戏开发课件.html';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }
+    }
+
+    // Initialize
+    new SlidePresentation();
+    new InlineEditor();
+  </script>
+</body>
+</html>
