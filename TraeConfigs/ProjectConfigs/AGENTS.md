@@ -1,3 +1,5 @@
+# Agent Guidelines
+
 ## Development Workflow
 
 ### 1. Think Before Coding
@@ -6,7 +8,7 @@
 
 Before implementing:
 - State your assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them - don't pick silently.
+- If multiple interpretations exist, present them — don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
 
@@ -20,7 +22,7 @@ Before implementing:
 - No error handling for impossible scenarios.
 - If you write 200 lines and it could be 50, rewrite it.
 
-Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+Ask yourself: *"Would a senior engineer say this is overcomplicated?"* If yes, simplify.
 
 ### 3. Surgical Changes
 
@@ -30,38 +32,50 @@ When editing existing code:
 - Don't "improve" adjacent code, comments, or formatting.
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it - don't delete it.
+- If you notice unrelated dead code, mention it — don't delete it.
 
 When your changes create orphans:
-- Remove imports/variables/functions that YOUR changes made unused.
+- Remove imports/variables/functions that **your** changes made unused.
 - Don't remove pre-existing dead code unless asked.
 
-The test: Every changed line should trace directly to the user's request.
+The test: every changed line should trace directly to the user's request.
 
 ### 4. Goal-Driven Execution
 
 **Define success criteria. Loop until verified.**
 
 Transform tasks into verifiable goals:
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
+- "Add validation" → "Write tests for invalid inputs, then make them pass."
+- "Fix the bug" → "Write a test that reproduces it, then make it pass."
+- "Refactor X" → "Ensure tests pass before and after."
 
 For multi-step tasks, state a brief plan:
+
 ```
 1. [Step] → verify: [check]
 2. [Step] → verify: [check]
 3. [Step] → verify: [check]
 ```
 
-Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+Strong success criteria enable independent execution. Weak criteria ("make it work") require constant clarification.
+
+---
 
 ## Testing
 
 ### Test-Driven Development (TDD)
 
-- Follow the **Red-Green-Refactor** cycle
-- Run tests and use Playerwright mcp to mock operations
-- After tests pass, refactor code
+- Follow the **Red → Green → Refactor** cycle.
+- Run tests and use Playwright MCP to mock operations.
+- After tests pass, refactor code.
 
-## 部署本地游戏服务器时，使用8082端口
+---
+
+## Project Preferences
+
+- Before starting the local game server, terminate any existing process already listening on the target port.
+
+| Area         | Preference                                                   |
+| ------------ | ------------------------------------------------------------ |
+| **Language** | TypeScript is the primary language for project code.         |
+| **Port**     | Use port **8082** for the local game server.                 |
