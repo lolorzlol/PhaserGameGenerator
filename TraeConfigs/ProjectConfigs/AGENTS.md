@@ -15,12 +15,10 @@ Always respond in Chinese.
 
 ## Development Workflow
 
-Start each new game project by running:
+Set up each new game project by running:
 
 ```bash
-npm install create-vite@9.0.6
-npm install phaser
-npm install -D typescript @types/node vite
+npm install phaser vite && npm install -D typescript
 ```
 
 ### 1. Think Before Coding
