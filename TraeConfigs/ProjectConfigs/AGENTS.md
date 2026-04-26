@@ -1,5 +1,16 @@
 # Agent Guidelines
 
+## Project Preferences
+
+| Area           | Preference                                                                 |
+| :------------- | :------------------------------------------------------------------------- |
+| **Tech Stack** | Phaser + TypeScript + Vite for all game projects.                      |
+| **Language**   | TypeScript is the primary language for project code.                       |
+| **Port**       | Use port **8082** for the local game server.                               |
+| **Startup**    | Before starting the local game server, terminate any existing process already listening on the target port. |
+
+---
+
 ## Development Workflow
 
 ### 1. Think Before Coding
@@ -68,14 +79,3 @@ Strong success criteria enable independent execution. Weak criteria ("make it wo
 - Follow the **Red → Green → Refactor** cycle.
 - Run tests and use Playwright MCP to mock operations.
 - After tests pass, refactor code.
-
----
-
-## Project Preferences
-
-- Before starting the local game server, terminate any existing process already listening on the target port.
-
-| Area         | Preference                                                   |
-| ------------ | ------------------------------------------------------------ |
-| **Language** | TypeScript is the primary language for project code.         |
-| **Port**     | Use port **8082** for the local game server.                 |
