@@ -10,6 +10,7 @@ Always respond in Chinese.
 | **Language**   | TypeScript is the primary language for project code.                       |
 | **Port**       | Use port **8082** for the local game server.                               |
 | **Startup**    | Before starting the local game server, terminate any existing process already listening on the target port. |
+| **Testing**    | Always run `tsc --noEmit` to type-check for errors before considering tests complete. |
 
 ---
 
@@ -17,7 +18,7 @@ Always respond in Chinese.
 Set up each new game project by running:
 
 ```bash
-npm install phaser vite && npm install -D typescript
+npm install phaser vite && npm install -D typescript && npm install -D vitest @vitest/ui
 ```
 
 ### 1. Think Before Coding
@@ -91,14 +92,14 @@ Strong success criteria enable independent execution. Weak criteria ("make it wo
 
 ## Generating Standalone Version
 
-When the user says "生成独立版本", create a standalone HTML version that can run by double-clicking `index.html` without any server or build tool.
+When the user requests a **standalone version**, generate a self-contained HTML bundle that runs by opening `index.html` directly in a browser — no server or build toolchain required.
 
 ### Steps
 
-
-1. **Delete any existing** `<project-name>-standalone/` directory if present, then create a fresh one next to the original project (do NOT modify original files).
-2. **Directory structure:** `index.html` + `js/scenes/` + `js/main.js`
-3. **Convert TypeScript to plain JavaScript:** remove type annotations, `import/export` statements, and use the global scope.
-4. **Load Phaser via CDN:** `https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js`
-5. **Verify:** ensure the structure is correct and can be opened directly via the `file://` protocol.
+1. **Clean & Create** — Delete any existing `<project-name>-standalone/` directory, then create a fresh one alongside the original project. Do **not** modify original project files.
+2. **Directory Structure** — `index.html` + `js/scenes/` + `js/main.js`
+3. **Convert to JavaScript** — Strip type annotations and `import/export` statements from TypeScript sources; expose classes on the global scope.
+4. **Copy Assets** — Replicate all asset files (sprites, textures, animations, audio, etc.) into the standalone folder and verify all references resolve correctly.
+5. **Load Phaser via CDN** — Use `<script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>` in `index.html`.
+6. **Verify** — Ensure the output structure is correct and the game runs via the `file://` protocol.
 
