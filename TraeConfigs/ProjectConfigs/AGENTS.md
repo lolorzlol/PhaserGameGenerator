@@ -1,5 +1,7 @@
 # Agent Guidelines
 
+Always respond in Chinese.
+
 ## Project Preferences
 
 | Area           | Preference                                                                 |
@@ -12,6 +14,14 @@
 ---
 
 ## Development Workflow
+
+Start each new game project by running:
+
+```bash
+npm install create-vite@9.0.6
+npm install phaser
+npm install -D typescript @types/node vite
+```
 
 ### 1. Think Before Coding
 
@@ -79,3 +89,72 @@ Strong success criteria enable independent execution. Weak criteria ("make it wo
 - Follow the **Red → Green → Refactor** cycle.
 - Run tests and use Playwright MCP to mock operations.
 - After tests pass, refactor code.
+
+---
+
+## Generating Standalone Version
+
+When the user says "生成独立版本", create a standalone HTML version that can run by double-clicking `index.html` without any server or build tool.
+
+### Steps
+
+1. **Create a new directory** `<project-name>-standalone/` next to the original project (do NOT modify original files).
+
+2. **Directory structure:**
+   ```
+   <project-name>-standalone/
+   ├── index.html          # Main page with CDN Phaser + script tags
+   └── js/
+       ├── scenes/         # All scene files (converted from TS)
+       │   ├── BootScene.js
+       │   ├── GameScene.js
+       │   └── ...
+       └── main.js         # Game config, loads all scenes
+   ```
+
+3. **Convert TypeScript to plain JavaScript:**
+   - Remove all TypeScript syntax (`: type`, `as Type`, `interface`, `type`, `private`, `public`, `readonly`, `Record<>`, etc.)
+   - Remove `import/export` statements (use global scope, Phaser loaded via CDN)
+   - Use plain JS class syntax, no access modifiers
+   - Keep `Phaser.GameObjects.Arc` instead of `Phaser.GameObjects.Circle` (the runtime type for `this.add.circle`)
+   - Replace template literals in string literals if needed for older browser compatibility (usually fine to keep)
+   - Convert `Record<K, V>` to plain `{}` object literals
+
+4. **`index.html` template:**
+   ```html
+   <!DOCTYPE html>
+   <html>
+   <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Game Title</title>
+     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+     <style>/* original styles */</style>
+   </head>
+   <body>
+     <div id="game-container"></div>
+     <!-- Import all scene files in order -->
+     <script src="js/scenes/BootScene.js"></script>
+     <script src="js/scenes/GameScene.js"></script>
+     <!-- ... other scenes -->
+     <script src="js/main.js"></script>
+   </body>
+   </html>
+   ```
+
+5. **`main.js` template:**
+   ```js
+   const config = {
+     type: Phaser.AUTO,
+     width: 800,  // adjust to project's original size
+     height: 600,
+     parent: 'game-container',
+     backgroundColor: '#0f3460',
+     scene: [BootScene, GameScene /* ... all scenes in order */],
+     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH }
+   };
+   const game = new Phaser.Game(config);
+   ```
+
+6. **Verify** by serving with `python -m http.server <port>` and testing in browser, or confirm the structure is correct for direct `file://` protocol opening.
+
